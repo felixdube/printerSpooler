@@ -44,30 +44,31 @@ int main() {
 
     Job current_job;
     
-    //while (1) {
-        ///* wait for a spot to be filled on the buffer */
-        //sem_wait(&shared_buffer->full);
-        //printf("here");
-        // /* wait for the critical section */
-        //sem_wait(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
+    while (1) {
+        /* wait for a spot to be filled on the buffer */
+        sem_wait(&shared_buffer->full);
+        printf("here");
+        /* wait for the index in the queue to be free */
+        sem_wait(&shared_buffer->queue_position.mutex);
+        /* wait for the critical section */
+        sem_wait(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
 
-        // /* get the job from the buffer */
-        // current_job = shared_buffer -> queue[ shared_buffer->queue_position.index ];
+        /* get the job from the buffer */
+        current_job = shared_buffer -> queue[ shared_buffer->queue_position.index ];
 
-        // /* release the critical section */
-        // sem_post(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
-        // sem_post(&shared_buffer->empty);
+        /* release the critical section */
+        sem_post(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
+        sem_post(&shared_buffer->empty);
 
-        // /* decrement the index of the queue */
-        // sem_wait(&shared_buffer->queue_position.mutex);
-        // shared_buffer->queue_position.index--;
-        // sem_post(&shared_buffer->queue_position.mutex);
+        /* decrement the index of the queue */
+        shared_buffer->queue_position.index--;
+        sem_post(&shared_buffer->queue_position.mutex);
 
-        // /* print the job */
-        // printf("Printer starts printing %i pages from Buffer[%i]", current_job.data, shared_buffer->queue_position.index);
-        // sleep(current_job.data);
-        // printf("Printer starts printing %i pages from Buffer[%i]", current_job.data, shared_buffer->queue_position.index);
-    //}
+        /* print the job */
+        printf("Printer starts printing %i pages from Buffer[%i]", current_job.data, shared_buffer->queue_position.index);
+        sleep(current_job.data);
+        printf("Printer starts printing %i pages from Buffer[%i]", current_job.data, shared_buffer->queue_position.index);
+    }
 
     return 0;
 }

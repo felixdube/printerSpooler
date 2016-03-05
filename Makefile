@@ -1,6 +1,6 @@
 LIBS := -lrt -lpthread
 
-all: printer.o client.o
+all: printer client
 
 printer: printer.c
 	gcc $^ -o $@ $(LIBS)
@@ -9,4 +9,4 @@ client: client.c
 	gcc $^ -o $@ $(LIBS)
 
 clean:
-	-rm printer.o client.o
+	-rm printer client

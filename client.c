@@ -34,7 +34,7 @@ int main() {
 
     Job current_job;
     current_job.data = 1;
-    sem_init(&(shared_buffer->full), 1, 0);
+    sem_init(&(current_job.mutex), 1, 1);
 
     /* if the buffer is full */
     if(shared_buffer->queue_position.index == 10) {
@@ -42,6 +42,8 @@ int main() {
         
         /* wait for an empty spot on the buffer */
         sem_wait(&shared_buffer->empty);
+        /* wait for the index in the queue to be free */
+        sem_wait(&shared_buffer->queue_position.mutex);
         /* wait on the critical section*/
         sem_wait(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
 
@@ -55,7 +57,6 @@ int main() {
         sem_post(&shared_buffer->full);
 
         /* decrement the index of the queue */
-        sem_wait(&shared_buffer->queue_position.mutex);
         shared_buffer->queue_position.index++;
         sem_post(&shared_buffer->queue_position.mutex);
     }
@@ -65,6 +66,8 @@ int main() {
         printf("there");
         /* wait for an empty spot on the buffer */
         sem_wait(&shared_buffer->empty);
+        /* wait for the index of the queue to be free */
+        sem_wait(&shared_buffer->queue_position.mutex);
         /* wait for the critical section */
         sem_wait(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
 
@@ -78,7 +81,6 @@ int main() {
         sem_post(&shared_buffer->full);
 
         /* decrement the index of the queue */
-        sem_wait(&shared_buffer->queue_position.mutex);
         shared_buffer->queue_position.index++;
         sem_post(&shared_buffer->queue_position.mutex);
     }
