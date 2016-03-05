@@ -22,68 +22,58 @@ int attach_shared_memory(){
 }
 
 int main() {
-            printf("start client1");
     setup_shared_memory();
-            printf("start client2");
     attach_shared_memory();
-
-        printf("start client");
 
 
     int ID = 2;
 
-    Job current_job;
-    current_job.data = 1;
-    sem_init(&(current_job.mutex), 1, 1);
 
-    /* if the buffer is full */
-    if(shared_buffer->queue_position.index == 10) {
-        printf("Client %i has %i page(s) to print, buffer full, sleeps", ID, current_job.data);
+    // /* if the buffer is full */
+    // if(shared_buffer->queue_position.index == 10) {
+    //     printf("Client %i has %i page(s) to print, buffer full, sleeps", ID, current_job.data);
         
-        /* wait for an empty spot on the buffer */
-        sem_wait(&shared_buffer->empty);
-        /* wait for the index in the queue to be free */
-        sem_wait(&shared_buffer->queue_position.mutex);
-        /* wait on the critical section*/
-        sem_wait(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
+    //     /* wait for an empty spot on the buffer */
+    //     sem_wait(&shared_buffer->empty);
+    //     /* wait on the critical section*/
+    //     sem_wait(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
 
-        /* place the job on the queue */
-        printf("Client %i wakes up, puts request in Buffer[%i]", ID, shared_buffer->queue_position.index);
-        shared_buffer->queue[ shared_buffer->queue_position.index ] = current_job;
+    //     /* place the job on the queue */
+    //     printf("Client %i wakes up, puts request in Buffer[%i]", ID, shared_buffer->queue_position.index);
+    //     shared_buffer->queue[ shared_buffer->queue_position.index ] = current_job;
 
-        /* release the critical section */
-        sem_post(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
-        /* signal that one more spot have been filled */
-        sem_post(&shared_buffer->full);
+    //     /* release the critical section */
+    //     sem_post(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
+    //     /* signal that one more spot have been filled */
+    //     sem_post(&shared_buffer->full);
 
-        /* decrement the index of the queue */
-        shared_buffer->queue_position.index++;
-        sem_post(&shared_buffer->queue_position.mutex);
-    }
+    //     /* decrement the index of the queue */
+    //     shared_buffer->queue_position.index++;
+    //     sem_post(&shared_buffer->queue_position.mutex);
+    // }
 
-    /* if the buffer is not full */
-    else {
-        printf("there");
+    // /* if the buffer is not full */
+    // else {
         /* wait for an empty spot on the buffer */
         sem_wait(&shared_buffer->empty);
         /* wait for the index of the queue to be free */
-        sem_wait(&shared_buffer->queue_position.mutex);
+        //sem_wait(&shared_buffer->queue_position.mutex);
         /* wait for the critical section */
-        sem_wait(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
+        sem_wait(&shared_buffer -> queue[ 0/*shared_buffer->queue_position.index*/ ].mutex);
 
         /* place the job on the queue */
-        printf("Client %i has %i page(s) to print, puts request in Buffer[%i]", ID, current_job.data, shared_buffer->queue_position.index);
-        shared_buffer->queue[ shared_buffer->queue_position.index ] = current_job;
+        printf("Client %i has %i page(s) to print, puts request in Buffer[%i]", ID, 2, 0/*shared_buffer->queue_position.index*/);
+        shared_buffer->queue[ 0/*shared_buffer->queue_position.index*/ ].data = 2;
 
         /* release the critical section */
-        sem_post(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
+        sem_post(&shared_buffer -> queue[ 0/*shared_buffer->queue_position.index*/ ].mutex);
         /* signal that one more spot have been filled */
         sem_post(&shared_buffer->full);
 
         /* decrement the index of the queue */
         shared_buffer->queue_position.index++;
-        sem_post(&shared_buffer->queue_position.mutex);
-    }
+        //sem_post(&shared_buffer->queue_position.mutex);
+    //}
 
 
 

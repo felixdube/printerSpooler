@@ -30,16 +30,18 @@ int init_shared_memory() {
 
     shared_buffer->queue_position.index = 0;
     sem_init(&(shared_buffer->queue_position.mutex), 1, 1);
+
+    int i;
+    for(i = 0; i < 10; i++) {
+        shared_buffer->queue[i].data = 0;
+        sem_init(&(shared_buffer->queue[i].mutex), 1, 1);
+    }
 }
 
 int main() {
-            printf("start1");
     setup_shared_memory();
-            printf("start2");
     attach_shared_memory();
-            printf("start3");
     init_shared_memory();
-    printf("start4");
 
 
     Job current_job;
@@ -47,27 +49,26 @@ int main() {
     while (1) {
         /* wait for a spot to be filled on the buffer */
         sem_wait(&shared_buffer->full);
-        printf("here");
         /* wait for the index in the queue to be free */
-        sem_wait(&shared_buffer->queue_position.mutex);
+        //sem_wait(&shared_buffer->queue_position.mutex);
         /* wait for the critical section */
-        sem_wait(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
+        sem_wait(&shared_buffer -> queue[ 0/*shared_buffer->queue_position.index*/ ].mutex);
 
         /* get the job from the buffer */
-        current_job = shared_buffer -> queue[ shared_buffer->queue_position.index ];
+        current_job = shared_buffer -> queue[ 0/*shared_buffer->queue_position.index*/ ];
 
         /* release the critical section */
-        sem_post(&shared_buffer -> queue[ shared_buffer->queue_position.index ].mutex);
+        sem_post(&shared_buffer -> queue[ 0/*shared_buffer->queue_position.index*/ ].mutex);
         sem_post(&shared_buffer->empty);
 
         /* decrement the index of the queue */
-        shared_buffer->queue_position.index--;
-        sem_post(&shared_buffer->queue_position.mutex);
+        //shared_buffer->queue_position.index--;
+        //sem_post(&shared_buffer->queue_position.mutex);
 
         /* print the job */
-        printf("Printer starts printing %i pages from Buffer[%i]", current_job.data, shared_buffer->queue_position.index);
+        printf("Printer starts printing %i pages from Buffer[%i]\n", current_job.data, shared_buffer->queue_position.index);
         sleep(current_job.data);
-        printf("Printer starts printing %i pages from Buffer[%i]", current_job.data, shared_buffer->queue_position.index);
+        printf("Printer done printing %i pages from Buffer[%i]\n", current_job.data, shared_buffer->queue_position.index);
     }
 
     return 0;
