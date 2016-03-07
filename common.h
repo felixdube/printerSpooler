@@ -15,20 +15,12 @@
 #define MY_SHM "/JIT"
 
 typedef struct {
-    sem_t mutex;
-    int data;
-} Job;
-
-typedef struct {
-	sem_t mutex;
-	int index;
-} Index;
-
-typedef struct {
 	sem_t empty;
 	sem_t full;
-	Job queue[10];
-	Index queue_position;
+	sem_t mutex;
+	int buffer_size;
+	int index;
+	int queue[0];
 } Buffer;
 
 #endif //_INCLUDE_COMMON_H_

@@ -27,6 +27,14 @@ int main() {
 
 
     int ID = 2;
+    int data = 10;
+
+    //TODO
+            // INPUT id data buffersize
+                //check is a number
+            // log
+            // error when buffer is full
+            // error when printer sleeps
 
 
     // /* if the buffer is full */
@@ -56,23 +64,21 @@ int main() {
     // else {
         /* wait for an empty spot on the buffer */
         sem_wait(&shared_buffer->empty);
-        /* wait for the index of the queue to be free */
-        //sem_wait(&shared_buffer->queue_position.mutex);
         /* wait for the critical section */
-        sem_wait(&shared_buffer -> queue[ 0/*shared_buffer->queue_position.index*/ ].mutex);
+        sem_wait(&shared_buffer->mutex);
 
         /* place the job on the queue */
-        printf("Client %i has %i page(s) to print, puts request in Buffer[%i]", ID, 2, 0/*shared_buffer->queue_position.index*/);
-        shared_buffer->queue[ 0/*shared_buffer->queue_position.index*/ ].data = 2;
+        printf("Client %i has %i page(s) to print, puts request in Buffer[%i]", ID, data, shared_buffer->index);
+        shared_buffer->queue[ shared_buffer->index ] = data;
+
+        /* increment the index of the queue */
+        shared_buffer->index++;
 
         /* release the critical section */
-        sem_post(&shared_buffer -> queue[ 0/*shared_buffer->queue_position.index*/ ].mutex);
+        sem_post(&shared_buffer->mutex);
         /* signal that one more spot have been filled */
         sem_post(&shared_buffer->full);
 
-        /* decrement the index of the queue */
-        shared_buffer->queue_position.index++;
-        //sem_post(&shared_buffer->queue_position.mutex);
     //}
 
 
