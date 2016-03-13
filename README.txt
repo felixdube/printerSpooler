@@ -1,3 +1,9 @@
+The following commands,
+
+Terminal 1: ./printer 5
+Terminal 2: ./client 1 5 && ./client 2 10 && ./client 3 15 && ./client 4 5 && ./client 5 10 && ./client 6 15 && ./client 7 5 && ./client 8 10 && ./client 9 15 && ./client 10 5 produce the following output:
+
+
 ---
 No request in buffer, Printer sleeps
 ---
