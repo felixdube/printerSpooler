@@ -5,6 +5,17 @@ int fd;
 int errno;
 Buffer* shared_buffer;
 int my_buffer_size;
+FILE *myLog;
+
+
+int isNumeric (const char * s)
+{
+    if (s == NULL || *s == '\0' || isspace(*s))
+      return 0;
+    char * p;
+    strtod (s, &p);
+    return *p == '\0';
+}
 
 int setup_shared_memory(){
     fd = shm_open(MY_SHM, O_CREAT | O_RDWR, 0666);
@@ -29,6 +40,7 @@ int init_shared_memory() {
     sem_init(&(shared_buffer->full), 1, 0);
     sem_init(&(shared_buffer->empty), 1, my_buffer_size);
     sem_init(&(shared_buffer->mutex), 1, 1);
+    sem_init(&(shared_buffer->log_mutex), 1, 1);
 
     int i;
     for(i = 0; i < my_buffer_size; i++) {
@@ -37,43 +49,105 @@ int init_shared_memory() {
 
     shared_buffer->buffer_size = my_buffer_size;
     shared_buffer->index = 0;
+
+    // empty the log
+    myLog = fopen("log.txt", "w+");
+    fclose(myLog);
 }
 
-int main() {
-    my_buffer_size = 20;
-
-    setup_shared_memory();
-    attach_shared_memory();
-    init_shared_memory();
-
-    printf("%i  %i \n", shared_buffer->buffer_size, shared_buffer->index);
-
-    int data;
-    int index;
+int main(int argc, char *argv[]) {
     
-    while (1) {
+    // check if the if right number of argument is entered
+    if (argc == 2) {
 
-        /* wait for a spot to be filled on the buffer */
-        sem_wait(&shared_buffer->full);
-        /* wait for the critical section */
-        sem_wait(&shared_buffer->mutex);
+        // check if the client id is a number
+        if(!isNumeric(argv[1])){
+            printf("Wrong buffer size argument!\n");
+            return 0;
+        }
+        
+        // cast the argument into an int
+        char *ptr;
+        my_buffer_size = strtol(argv[1], &ptr, 10);
 
-        /* get the job from the buffer */
-        shared_buffer->index--;
-        data = shared_buffer->queue[ shared_buffer->index ];
-        index = shared_buffer->index;
+        // setup memory
+        setup_shared_memory();
+        attach_shared_memory();
+        init_shared_memory();
 
-        /* release the critical section */
-        sem_post(&shared_buffer->mutex);
-        sem_post(&shared_buffer->empty);
+        int data;
+        int index;
+        
+        while (1) {
+
+            int current_index;
+
+            // wait for the critical section 
+            sem_wait(&shared_buffer->mutex);
+            current_index = shared_buffer->index;
+            // release the critical section 
+            sem_post(&shared_buffer->mutex);
+
+
+            /* if the buffer is full */
+            if(current_index == 0) {
+                printf("---\nNo request in buffer, Printer sleeps\n---\n");
+
+                /* save into log */
+                //wait for the printing mutex
+                sem_wait(&shared_buffer->log_mutex);
+                myLog = fopen("log.txt", "a");
+                fprintf(myLog, "---\nNo request in buffer, Printer sleeps\n---\n");
+                fclose(myLog);
+                // release printing mutex 
+                sem_post(&shared_buffer->log_mutex);
+            }
+            // wait for a spot to be filled on the buffer 
+            sem_wait(&shared_buffer->full);
+            // wait for the critical section 
+            sem_wait(&shared_buffer->mutex);
+
+            // get the job from the buffer 
+            shared_buffer->index--;
+            data = shared_buffer->queue[ shared_buffer->index ];
+            index = shared_buffer->index;
+
+            // release the critical section 
+            sem_post(&shared_buffer->mutex);
+            sem_post(&shared_buffer->empty);
 
 
 
-        /* print the job */
-        printf("Printer starts printing %i pages from Buffer[%i]\n", data, index);
-        sleep(data);
-        printf("Printer done printing %i pages from Buffer[%i]\n", data, index);
+            /* print the job */
+            printf("Printer starts printing %i pages from Buffer[%i]\n", data, index);
+
+            /* save into log */
+            // wait for the printing mutex
+            sem_wait(&shared_buffer->log_mutex);
+            myLog = fopen("log.txt", "a");
+            fprintf(myLog, "Printer starts printing %i pages from Buffer[%i]\n", data, index);
+            fclose(myLog);
+            // release printing mutex 
+            sem_post(&shared_buffer->log_mutex);
+
+            // wait for the print to be done
+            sleep(data);
+            printf("Printer done printing %i pages from Buffer[%i]\n", data, index);
+
+            /* save into log */
+            // wait for the printing mutex
+            sem_wait(&shared_buffer->log_mutex);
+            myLog = fopen("log.txt", "a");
+            fprintf(myLog, "Printer done printing %i pages from Buffer[%i]\n", data, index);
+            fclose(myLog);
+            // release printing mutex 
+            sem_post(&shared_buffer->log_mutex);
+        }
+
+        return 0;
     }
-
-    return 0;
+    else {
+        printf("Usage: ./printer buffer_size\n");
+        return 0;
+    }
 }

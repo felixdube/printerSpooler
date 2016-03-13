@@ -18,6 +18,7 @@ typedef struct {
 	sem_t empty;
 	sem_t full;
 	sem_t mutex;
+	sem_t log_mutex;
 	int buffer_size;
 	int index;
 	int queue[0];
